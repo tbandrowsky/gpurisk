@@ -24,6 +24,15 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="gslport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="openclhost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="file_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
