@@ -75,11 +75,20 @@ __kernel void test_numbers(__global testInputStruct* input, __global testOutputS
 
 }
 
+void riskOpenClTest()
+{
+	io::file_data fd("gslbeta.cl");
+
+	openClProgram<testInputStruct, testOutputStruct> program(fd.get_data());
+
+}
+
 int main()
 {
 	try
 	{
-		simpleOpenCLTest();
+		riskOpenClTest();
+		//simpleOpenCLTest();
 	}
 	catch (std::exception& exc)
 	{

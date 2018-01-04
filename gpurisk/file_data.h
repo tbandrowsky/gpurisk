@@ -19,6 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include "windows.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -61,16 +62,43 @@ namespace io
 		{
 			file_name = cfilename;
 
+			// Opening the existing file
+			HANDLE hFile1 = CreateFileA(cfilename, // file to open
+				GENERIC_READ, // open for reading
+				FILE_SHARE_READ, // share for reading
+				NULL, // default security
+				OPEN_EXISTING, // existing file only
+				FILE_ATTRIBUTE_NORMAL,// normal file
+				NULL); // no attribute template
+			if (hFile1 == INVALID_HANDLE_VALUE)
+			{
+				error = true;
+			}
+			length = GetFileSize(hFile1, NULL);
+
+			char *buffer = new char[length + 1];
+			DWORD bytesRead;
+			::ReadFile(hFile1, buffer, length, &bytesRead, NULL);
+			buffer[length] = 0;
+			converted_str = buffer;
+			delete[] buffer;
+
+			// close the file's handle and itself
+			CloseHandle(hFile1);
+
+#if LINUX
 			struct stat stat_buf;
 			int rc = stat(cfilename, &stat_buf);
 			if (rc == 0)
 			{
-				length = stat_buf.st_size * 2 + 1;
+				length = stat_buf.st_size + 1;
 				FILE *fp = fopen(cfilename, "r");
-				if (fp != nullptr) {
+				if (fp != nullptr) 
+				{
 					char *buffer = new char[length + 1];
 					fread(buffer, 1, length, fp);
 					fclose(fp);
+					buffer[length] = 0;
 					converted_str = buffer;
 					delete[] buffer;
 				}
@@ -79,13 +107,17 @@ namespace io
 					error = true;
 				}
 			}
-			else {
+			else
+			{
 				error = true;
 			}
+#endif
+
 		}
 
 		virtual ~file_data()
 		{
+
 		}
 
 		const char *get_data()
