@@ -207,9 +207,9 @@ typedef struct gsl_sf_result_struct gsl_sf_result;
 
 #define PSI_TABLE_NMAX 100
 __constant double psi_table[PSI_TABLE_NMAX + 1] = {
-	0.0,  /* Infinity */              /* psi(0) */
-	-M_EULER,                          /* psi(1) */
-	0.42278433509846713939348790992,  /* ...    */
+	0.0,/* Infinity */ /* psi(0) */
+	-M_EULER,/* psi(1) */
+	0.42278433509846713939348790992,/* */
 	0.92278433509846713939348790992,
 	1.25611766843180047272682124325,
 	1.50611766843180047272682124325,
@@ -613,9 +613,9 @@ int gsl_sf_lnfact_e(const unsigned int n, gsl_sf_result * result)
 
 #define PSI_1_TABLE_NMAX 100
 __constant double psi_1_table[PSI_1_TABLE_NMAX + 1] = {
-	0.0,  /* Infinity */              /* psi(1,0) */
-	M_PI*M_PI / 6.0,                    /* psi(1,1) */
-	0.644934066848226436472415,       /* ...      */
+	0.0,
+	M_PI*M_PI / 6.0,
+	0.644934066848226436472415,
 	0.394934066848226436472415,
 	0.2838229557371153253613041,
 	0.2213229557371153253613041,
@@ -711,9 +711,9 @@ __constant double psi_1_table[PSI_1_TABLE_NMAX + 1] = {
 	0.01058191183901270133041676,
 	0.01047110851491297833872701,
 	0.01036260157046853389428257,
-	0.01025632035036012704977199,  /* ...        */
-	0.01015219706839427948625679,  /* psi(1,99)  */
-	0.01005016666333357139524567   /* psi(1,100) */
+	0.01025632035036012704977199,
+	0.01015219706839427948625679,
+	0.01005016666333357139524567
 };
 
 
@@ -2134,7 +2134,7 @@ int
 gamma_inc_Q_series(double a, double x, gsl_sf_result * result)
 {
 	double term1;  /* 1 - x^a/Gamma(a+1) */
-	double sum;    /* 1 + (a+1)/(a+2)(-x)/2! + (a+1)/(a+3)(-x)^2/3! + ... */
+	double sum;    /* 1 + (a+1)/(a+2)(-x)/2! + (a+1)/(a+3)(-x)^2/3! */
 	int stat_sum;
 	double term2;  /* a temporary variable used at the end */
 
@@ -2266,7 +2266,7 @@ gamma_inc_Q_series(double a, double x, gsl_sf_result * result)
 * of Q(a,x) or Gamma(a,x).
 *
 *              1   (1-a)/x  1/x  (2-a)/x   2/x  (3-a)/x
-*   F(a,x) =  ---- ------- ----- -------- ----- -------- ...
+*   F(a,x) =  ---- ------- ----- -------- ----- -------- 
 *             1 +   1 +     1 +   1 +      1 +   1 +
 *
 * Hans E. Plesser, 2002-01-22 (hans dot plesser at itf dot nlh dot no).
@@ -2932,3 +2932,30 @@ gsl_cdf_beta_Q(double x, double a, double b)
 	return Q;
 }
 
+struct gsl_cdf_beta_request
+{
+	double x, a, b;
+};
+
+typedef struct gsl_cdf_beta_request gsl_cdf_beta_request;
+
+struct gsl_cdf_beta_response
+{
+	double result;
+};
+
+typedef struct gsl_cdf_beta_response gsl_cdf_beta_response;
+
+__kernel void gsl_cdf_beta_P_cl(__global gsl_cdf_beta_request *request, __global gsl_cdf_beta_response *response)
+{
+	int threadId = get_global_id(0);
+
+	response[threadId].result = gsl_cdf_beta_P(request[threadId].x, request[threadId].a, request[threadId].b);
+}
+
+__kernel void gsl_cdf_beta_Q_cl(__global gsl_cdf_beta_request *request, __global gsl_cdf_beta_response *response)
+{
+	int threadId = get_global_id(0);
+
+	response[threadId].result = gsl_cdf_beta_Q(request[threadId].x, request[threadId].a, request[threadId].b);
+}

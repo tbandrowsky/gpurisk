@@ -21,7 +21,7 @@ public:
 	INPUT input;
 	OUTPUT output;
 
-	openClProgram(const char *program_buffer)
+	openClProgram(const char *program_buffer, int gpu_type = CL_DEVICE_TYPE_GPU)
 	{
 		int err;
 		/* Identify a platform */
@@ -31,7 +31,7 @@ public:
 		}
 
 		/* Access a device */
-		err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+		err = clGetDeviceIDs(platform, gpu_type, 1, &device, NULL);
 		if (err < 0) {
 			throw std::exception("Couldn't identify a GPU");
 		}
@@ -77,12 +77,12 @@ public:
 		clReleaseDevice(device);
 	}
 
-	template <class InputStruct, class OutputStruct> bool RunKernel(const char *kernalName, InputStruct *input, OutputStruct *output, size_t global_size, size_t local_size)
+	template <class InputStruct, class OutputStruct> bool RunKernel(const char *kernalName, InputStruct *input, OutputStruct *output, size_t input_size = 1, size_t local_size = 1)
 	{
 		cl_command_queue queue;
 		cl_kernel kernel;
 		int err;
-		
+
 		/* Create a command queue */
 		queue = clCreateCommandQueue(context, device, 0, &err);
 		if (err < 0) {
@@ -97,14 +97,14 @@ public:
 		};
 
 		/* Create data buffer */
-		auto input_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(InputStruct), input, &err);
+		auto input_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(InputStruct) * input_size, input, &err);
 		if (err < 0) {
 			clReleaseKernel(kernel);
 			clReleaseCommandQueue(queue);
 			throw std::exception("Couldn't input buffer.");
 		};
 
-		auto output_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |CL_MEM_COPY_HOST_PTR, sizeof(OutputStruct), output, &err);
+		auto output_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |CL_MEM_COPY_HOST_PTR, sizeof(OutputStruct) * input_size, output, &err);
 		if (err < 0) {
 			clReleaseKernel(kernel);
 			clReleaseMemObject(input_buffer);
@@ -124,7 +124,7 @@ public:
 		}
 
 		/* Enqueue kernel */
-		err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size,
+		err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &input_size,
 			&local_size, 0, NULL, NULL);
 		if (err < 0) {
 			clReleaseKernel(kernel);
@@ -136,7 +136,7 @@ public:
 
 		/* Read the kernel's output */
 		err = clEnqueueReadBuffer(queue, output_buffer, CL_TRUE, 0,
-			sizeof(OutputStruct), output, 0, NULL, NULL);
+			sizeof(OutputStruct)* input_size, output, 0, NULL, NULL);
 		if (err < 0) {
 			clReleaseKernel(kernel);
 			clReleaseMemObject(output_buffer);
