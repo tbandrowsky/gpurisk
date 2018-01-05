@@ -147,14 +147,14 @@ void riskOpenClTest()
 	std::cout << "Running GPU" << std::endl;
 
 	{
-		sys::benchmarker bmStock;
+		sys::benchmarker bmGPU;
 		openClProgram<gsl_cdf_beta_request, gsl_cdf_beta_response> programGpu(fd.get_data(), CL_DEVICE_TYPE_GPU);
 
-		bmStock.start();
+		bmGPU.start();
 		programGpu.RunKernel("gsl_cdf_beta_Q_cl", requests.get(), responses_gpu.get(), num_requests, 1);
-		bmStock.stop();
+		bmGPU.stop();
 
-		std::cout << "Ran GPU " << num_requests << " beta Q's in " << bmStock.getTotalSeconds() << " seconds" << std::endl;
+		std::cout << "Ran GPU " << num_requests << " beta Q's in " << bmGPU.getTotalSeconds() << " seconds" << std::endl;
 	}
 
 	/*
