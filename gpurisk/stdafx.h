@@ -7,9 +7,13 @@
 
 #include "targetver.h"
 
+#include "windows.h"
 #include <stdio.h>
 #include <tchar.h>
 
 #include "openclhost.h"
+#include "engine_benchmark.h"
+
+#include <memory>
 
 // TODO: reference additional headers your program requires here
