@@ -90,7 +90,7 @@ void riskOpenClTest()
 {
 	io::file_data fd("gslbeta.cl");
 
-	const int num_requests = 1000000;
+	const int num_requests = 100000;
 	const int group_size = num_requests / 5;
 
 	std::unique_ptr<gsl_cdf_beta_request[]> requests( new gsl_cdf_beta_request[num_requests] );

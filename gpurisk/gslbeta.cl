@@ -754,7 +754,7 @@ struct cheb_series_struct {
 };
 typedef struct cheb_series_struct cheb_series;
 
-static inline int
+int
 cheb_eval_e(__constant cheb_series * cs,
 	double x,
 	gsl_sf_result * result)
@@ -865,7 +865,7 @@ __constant cheb_series psi_cs = {
 * cases here because of the way we use even/odd parts
 * of the function
 */
-static int
+int
 psi_x(double x, gsl_sf_result * result)
 {
 	double y = fabs(x);
@@ -1108,7 +1108,7 @@ gsl_sf_log_1plusx_mx_e(double x, gsl_sf_result * result)
 
 /* generic polygamma; assumes n >= 0 and x > 0
 */
-static int
+int
 psi_n_xg0(int n, double x, gsl_sf_result * result)
 {
 	if (n == 0) {
@@ -1207,7 +1207,6 @@ int gsl_sf_psi_n_e(int n, double x, gsl_sf_result * result)
 * x = -N + eps
 * assumes N >= 1
 */
-static
 int
 lngamma_sgn_sing(int N, double eps, gsl_sf_result * lng, double * sgn)
 {
@@ -1308,8 +1307,6 @@ lngamma_sgn_sing(int N, double eps, gsl_sf_result * lng, double * sgn)
 	}
 }
 
-inline
-static
 int
 lngamma_1_pade(double eps, gsl_sf_result * result)
 {
@@ -1335,10 +1332,7 @@ lngamma_1_pade(double eps, gsl_sf_result * result)
 	return GSL_SUCCESS;
 }
 
-inline
-static
-int
-lngamma_2_pade(double eps, gsl_sf_result * result)
+int lngamma_2_pade(double eps, gsl_sf_result * result)
 {
 	/* Use (2,2) Pade for Log[Gamma[2+eps]]/eps
 	* plus a correction series.
@@ -1365,9 +1359,7 @@ lngamma_2_pade(double eps, gsl_sf_result * result)
 /* x = eps near zero
 * gives double-precision for |eps| < 0.02
 */
-static
-int
-lngamma_sgn_0(double eps, gsl_sf_result * lng, double * sgn)
+int lngamma_sgn_0(double eps, gsl_sf_result * lng, double * sgn)
 {
 	/* calculate series for g(eps) = Gamma(eps) eps - 1/(1+eps) - eps/2 */
 	double c1 = -0.07721566490153286061;
@@ -1411,9 +1403,7 @@ __constant double lanczos_7_c[9] = {
 * gamma=7, truncated at 1/(z+8)
 * [J. SIAM Numer. Anal, Ser. B, 1 (1964) 86]
 */
-static
-int
-lngamma_lanczos(double x, gsl_sf_result * result)
+int lngamma_lanczos(double x, gsl_sf_result * result)
 {
 	int k;
 	double Ag;
@@ -1615,9 +1605,7 @@ __constant cheb_series gstar_b_cs = {
 /* series for gammastar(x)
 * double-precision for x > 10.0
 */
-static
-int
-gammastar_ser(double x, gsl_sf_result * result)
+int gammastar_ser(double x, gsl_sf_result * result)
 {
 	/* Use the Stirling series for the correction to Log(Gamma(x)),
 	* which is better behaved and easier to compute than the
@@ -1690,9 +1678,7 @@ gsl_sf_gammastar_e(double x, gsl_sf_result * result)
 /* The dominant part,
 * D(a,x) := x^a e^(-x) / Gamma(a+1)
 */
-static
-int
-gamma_inc_D(double a, double x, gsl_sf_result * result)
+int gamma_inc_D(double a, double x, gsl_sf_result * result)
 {
 	if (a < 10.0) {
 		double lnr;
@@ -1735,9 +1721,7 @@ gamma_inc_D(double a, double x, gsl_sf_result * result)
 /* Evaluate the continued fraction for exprel.
 * [Abramowitz+Stegun, 4.2.41]
 */
-static
-int
-exprel_n_CF(double N, double x, gsl_sf_result * result)
+int exprel_n_CF(double N, double x, gsl_sf_result * result)
 {
 	double RECUR_BIG = GSL_SQRT_DBL_MAX;
 	int maxiter = 5000;
@@ -1814,9 +1798,7 @@ gsl_sf_exprel_n_CF_e(double N, double x, gsl_sf_result * result)
 
 /* P series representation.
 */
-static
-int
-gamma_inc_P_series(double a, double x, gsl_sf_result * result)
+int gamma_inc_P_series(double a, double x, gsl_sf_result * result)
 {
 	int nmax = 10000;
 
@@ -2023,8 +2005,7 @@ __constant double erfc8_sum(double x)
 	return num / den;
 }
 
-inline
-static double erfc8(double x)
+double erfc8(double x)
 {
 	double e;
 	e = erfc8_sum(x);
@@ -2084,9 +2065,7 @@ int gsl_sf_erfc_e(double x, gsl_sf_result * result)
 /* Uniform asymptotic for x near a, a and x large.
 * See [Temme, p. 285]
 */
-static
-int
-gamma_inc_Q_asymp_unif(double a, double x, gsl_sf_result * result)
+int gamma_inc_Q_asymp_unif(double a, double x, gsl_sf_result * result)
 {
 	double rta = sqrt(a);
 	double eps = (x - a) / a;
@@ -2129,9 +2108,7 @@ gamma_inc_Q_asymp_unif(double a, double x, gsl_sf_result * result)
 
 /* Useful for small a and x. Handles the subtraction analytically.
 */
-static
-int
-gamma_inc_Q_series(double a, double x, gsl_sf_result * result)
+int gamma_inc_Q_series(double a, double x, gsl_sf_result * result)
 {
 	double term1;  /* 1 - x^a/Gamma(a+1) */
 	double sum;    /* 1 + (a+1)/(a+2)(-x)/2! + (a+1)/(a+3)(-x)^2/3! */
@@ -2275,8 +2252,7 @@ gamma_inc_Q_series(double a, double x, gsl_sf_result * result)
 * See gamma_inc_Q_CF() below.
 *
 */
-static int
-gamma_inc_F_CF(double a, double x, gsl_sf_result * result)
+int gamma_inc_F_CF(double a, double x, gsl_sf_result * result)
 {
 	int    nmax = 5000;
 	double small = gsl_pow_3(GSL_DBL_EPSILON);
@@ -2320,9 +2296,7 @@ gamma_inc_F_CF(double a, double x, gsl_sf_result * result)
 		return GSL_SUCCESS;
 }
 
-static
-int
-gamma_inc_Q_CF(double a, double x, gsl_sf_result * result)
+int gamma_inc_Q_CF(double a, double x, gsl_sf_result * result)
 {
 	gsl_sf_result D;
 	gsl_sf_result F;
@@ -2337,9 +2311,7 @@ gamma_inc_Q_CF(double a, double x, gsl_sf_result * result)
 
 /* Q large x asymptotic
 */
-static
-int
-gamma_inc_Q_large_x(double a, double x, gsl_sf_result * result)
+int gamma_inc_Q_large_x(double a, double x, gsl_sf_result * result)
 {
 	int nmax = 5000;
 
@@ -2448,9 +2420,7 @@ gsl_sf_gamma_inc_Q_e(double a, double x, gsl_sf_result * result)
 	}
 }
 
-static double
-beta_cont_frac(double a, double b, double x,
-	double epsabs)
+double beta_cont_frac(double a, double b, double x,	double epsabs)
 {
 	unsigned int max_iter = 512;    /* control iterations      */
 	double cutoff = 2.0 * GSL_DBL_MIN;      /* control the zero cutoff */
@@ -2596,8 +2566,7 @@ double gsl_sf_gamma_inc_P(double a, double x)
 	EVAL_RESULT(gsl_sf_gamma_inc_P_e(a, x, &result));
 }
 
-static double
-isnegint(double x)
+double isnegint(double x)
 {
 	return (x < 0) && (x == floor(x));
 }
@@ -2832,9 +2801,7 @@ double gsl_sf_lnbeta(double x, double y)
 	EVAL_RESULT(gsl_sf_lnbeta_e(x, y, &result));
 }
 
-static double
-beta_inc_AXPY(double A, double Y,
-	double a, double b, double x)
+double beta_inc_AXPY(double A, double Y,double a, double b, double x)
 {
 	if (x == 0.0)
 	{
