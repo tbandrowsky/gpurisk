@@ -124,7 +124,8 @@ public:
 		}
 
 		/* Enqueue kernel */
-		err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &input_size,
+		size_t work_size = input_size * local_size;
+		err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &work_size,
 			&local_size, 0, NULL, NULL);
 		if (err < 0) {
 			clReleaseKernel(kernel);

@@ -50,5 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="gslbeta.cl" />
+    <None Include="nativebeta.cl" />
   </ItemGroup>
 </Project>

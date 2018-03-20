@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "gslport.h"
+#include <iomanip>
 
 const int test_x = 10;
 const int test_y = 10;
@@ -17,16 +18,20 @@ struct testOutputStruct
 	double totalsNumbers[test_y];
 } ;
 
-struct gsl_cdf_beta_request
+struct beta_request
 {
 	double x, a, b;
 };
 
-struct gsl_cdf_beta_response
+typedef struct beta_request beta_request;
+
+struct beta_response
 {
+	int threadid;
 	double result;
 };
 
+typedef struct beta_response beta_response;
 
 void simpleOpenCLTest()
 {
@@ -37,7 +42,7 @@ void simpleOpenCLTest()
 	{
 		for (int j = 0; j < test_x; j++)
 		{
-			in.inputNumbers[i][j] = i;
+			in.inputNumbers[i][j] = i+1;
 		}
 		out.totalsNumbers[i] = 0;
 	}
@@ -63,7 +68,7 @@ void simpleOpenCLTest()
 
 __kernel void test_numbers(__global testInputStruct* input, __global testOutputStruct* output) 
 {
-   int global_idx = get_local_id(0);
+   int global_idx = get_global_id(0);
 
    int i;
 
@@ -77,7 +82,7 @@ __kernel void test_numbers(__global testInputStruct* input, __global testOutputS
 
 	openClProgram<testInputStruct, testOutputStruct> program(vogon_poem);
 
-	program.RunKernel("test_numbers", &in, &out, 1, 5);
+	program.RunKernel("test_numbers", &in, &out, 1, 10);
 
 	for (int i = 0; i < test_y; i++)
 	{
@@ -88,17 +93,18 @@ __kernel void test_numbers(__global testInputStruct* input, __global testOutputS
 
 void riskOpenClTest()
 {
-	io::file_data fd("gslbeta.cl");
+	io::file_data fdGsl("gslbeta.cl"),
+				  fdNative("nativebeta.cl");
 
-	const int num_requests = 100000;
-	const int group_size = num_requests / 5;
+	const int num_requests = 10000000;
+	const int group_size = num_requests / 10;
 
-	std::unique_ptr<gsl_cdf_beta_request[]> requests( new gsl_cdf_beta_request[num_requests] );
+	std::unique_ptr<beta_request[]> requests( new beta_request[num_requests] );
 
-	std::unique_ptr<gsl_cdf_beta_response[]>	
-			responses_gpu(new gsl_cdf_beta_response[num_requests]),
-			responses_cpu(new gsl_cdf_beta_response[num_requests]),
-			responses_stock(new gsl_cdf_beta_response[num_requests]);
+	std::unique_ptr<beta_response[]>	
+			responses_gpu(new beta_response[num_requests]),
+			responses_cpu(new beta_response[num_requests]),
+			responses_stock(new beta_response[num_requests]);
 
 	for (int i = 0; i < num_requests; i++)
 	{
@@ -125,12 +131,32 @@ void riskOpenClTest()
 			req->a = 2;
 			req->b = 5;
 			break;
+		case 5:
+			req->a = .1;
+			req->b = .1;
+			break;
+		case 6:
+			req->a = 0.01;
+			req->b = 10;
+			break;
+		case 7:
+			req->a = 10;
+			req->b = 0.01;
+			break;
+		case 8:
+			req->a = 100;
+			req->b = 1;
+			break;
+		case 9:
+			req->a = 1;
+			req->b = 100;
+			break;
 		}
 		req->x = (double)(i % group_size) / (double)group_size;
 		responses_gpu[i].result = responses_cpu[i].result = responses_stock[i].result = -1.0;
 	}
 
-	std::cout << "Running Stock" << std::endl;
+	std::cout << "Running Stock GSL" << std::endl;
 
 	{
 		sys::benchmarker bmStock;
@@ -144,36 +170,55 @@ void riskOpenClTest()
 		std::cout << "Ran stock " << num_requests << " beta Q's in " << bmStock.getTotalSeconds() << " seconds" << std::endl;
 	}
 
-	std::cout << "Running GPU" << std::endl;
+	std::cout << "Running GPU Native" << std::endl;
 
 	{
 		sys::benchmarker bmGPU;
-		openClProgram<gsl_cdf_beta_request, gsl_cdf_beta_response> programGpu(fd.get_data(), CL_DEVICE_TYPE_GPU);
+		openClProgram<beta_request, beta_response> programGpu(fdNative.get_data(), CL_DEVICE_TYPE_GPU);
 
 		bmGPU.start();
-		programGpu.RunKernel("gsl_cdf_beta_Q_cl", requests.get(), responses_gpu.get(), num_requests, 1);
+		programGpu.RunKernel("incBetaQ", requests.get(), responses_gpu.get(), num_requests, 1);
 		bmGPU.stop();
 
 		std::cout << "Ran GPU " << num_requests << " beta Q's in " << bmGPU.getTotalSeconds() << " seconds" << std::endl;
 	}
 
-	/*
 	std::cout << "Running CPU" << std::endl;
 	{
-		openClProgram<gsl_cdf_beta_request, gsl_cdf_beta_response> programCpu(fd.get_data(), CL_DEVICE_TYPE_CPU);
-		programCpu.RunKernel("gsl_cdf_beta_Q_cl", requests, responses_cpu, num_requests, 1);
-	}
-	*/
 
-	std::cout << "Differences\nx\t a\t b\t\t gpu\t\t stock\t\t" << std::endl;
+		sys::benchmarker bmCPU;
+		openClProgram<beta_request, beta_response> programCpu(fdNative.get_data(), CL_DEVICE_TYPE_CPU);
+
+		bmCPU.start();
+		programCpu.RunKernel("incBetaQ", requests.get(), responses_cpu.get(), num_requests, 1);
+		bmCPU.stop();
+
+		std::cout << "Ran CPU " << num_requests << " beta Q's in " << bmCPU.getTotalSeconds() << " seconds" << std::endl;
+	}
+
+	int cw = 15;
+	std::cout << "Differences\n";
+	std::cout << std::setw(cw) << "x" << std::setw(cw) << "a" << std::setw(cw) << "b" << std::setw(cw) << "cpu" << std::setw(cw) << "gpu" << std::setw(cw) << "gsl" << std::setw(cw) << "cpu thr" << std::setw(cw) << "gpu thr" << std::endl;
 	for (int i = 0; i < num_requests; i++)
 	{
-		if (fabs(responses_gpu[i].result - responses_stock[i].result) > 0.00001) {
-			std::cout << requests[i].x << "\t" << requests[i].a << "\t" << requests[i].b << "\t\t";
-//			std::cout << responses_cpu[i].result << "\t\t";
-			std::cout << responses_gpu[i].result << "\t\t";
-			std::cout << responses_stock[i].result << "\t\t";
-			std::cout << std::endl;
+		if (fabs(responses_gpu[i].result - responses_stock[i].result) > 0.000001 || num_requests < 101) {
+			std::cout << std::setw(cw) 
+				<< requests[i].x 
+				<< std::setw(cw)
+				<< requests[i].a 
+				<< std::setw(cw)
+				<< requests[i].b
+				<< std::setw(cw)
+				<< responses_cpu[i].result
+				<< std::setw(cw)
+				<< responses_gpu[i].result
+				<< std::setw(cw)
+				<< responses_stock[i].result
+				<< std::setw(cw)
+				<< responses_cpu[i].threadid
+				<< std::setw(cw)
+			<< responses_gpu[i].threadid
+			<< std::endl;
 		}
 	}
 }

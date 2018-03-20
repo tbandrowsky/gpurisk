@@ -1985,7 +1985,7 @@ __constant double erfc8_sumQ[] = {
 	1.0
 };
 
-__constant double erfc8_sum(double x)
+double erfc8_sum(double x)
 {
 	/* estimates erfc(x) valid for 8 < x < 100 */
 	/* This is based on index 5725 in Hart et al */
@@ -2648,6 +2648,7 @@ gsl_sf_log_1plusx_e(double x, gsl_sf_result * result)
 	}
 }
 
+int gsl_sf_lngamma_sgn_e(double x, gsl_sf_result * result_lg, double * sgn);
 
 int
 gsl_sf_lnbeta_sgn_e(double x, double y, gsl_sf_result * result, double * sgn)
@@ -2908,6 +2909,7 @@ typedef struct gsl_cdf_beta_request gsl_cdf_beta_request;
 
 struct gsl_cdf_beta_response
 {
+	int threadid;
 	double result;
 };
 
@@ -2917,6 +2919,7 @@ __kernel void gsl_cdf_beta_P_cl(__global gsl_cdf_beta_request *request, __global
 {
 	int threadId = get_global_id(0);
 
+	response[threadId].threadid = threadId;
 	response[threadId].result = gsl_cdf_beta_P(request[threadId].x, request[threadId].a, request[threadId].b);
 }
 
@@ -2924,5 +2927,6 @@ __kernel void gsl_cdf_beta_Q_cl(__global gsl_cdf_beta_request *request, __global
 {
 	int threadId = get_global_id(0);
 
+	response[threadId].threadid = threadId;
 	response[threadId].result = gsl_cdf_beta_Q(request[threadId].x, request[threadId].a, request[threadId].b);
 }
