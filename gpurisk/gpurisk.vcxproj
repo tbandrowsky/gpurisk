@@ -151,6 +151,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ampbeta.h" />
     <ClInclude Include="engine_benchmark.h" />
     <ClInclude Include="file_data.h" />
     <ClInclude Include="gslport.h" />
@@ -159,6 +160,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ampbeta.cpp" />
     <ClCompile Include="engine_benchmark.cpp" />
     <ClCompile Include="gpurisk.cpp" />
     <ClCompile Include="stdafx.cpp">

@@ -10,8 +10,12 @@
 #include "windows.h"
 #include <stdio.h>
 #include <tchar.h>
+#include <amp.h>  
+#include <amp_math.h>  
 
 #include "openclhost.h"
+#include "ampbeta.h"
+
 #include "engine_benchmark.h"
 
 #include <memory>

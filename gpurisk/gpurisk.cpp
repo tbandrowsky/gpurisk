@@ -18,21 +18,6 @@ struct testOutputStruct
 	double totalsNumbers[test_y];
 } ;
 
-struct beta_request
-{
-	double x, a, b;
-};
-
-typedef struct beta_request beta_request;
-
-struct beta_response
-{
-	int threadid;
-	double result;
-};
-
-typedef struct beta_response beta_response;
-
 void simpleOpenCLTest()
 {
 	testInputStruct in;
@@ -103,6 +88,7 @@ void riskOpenClTest()
 
 	std::unique_ptr<beta_response[]>	
 			responses_gpu(new beta_response[num_requests]),
+			responses_amp(new beta_response[num_requests]),
 			responses_cpu(new beta_response[num_requests]),
 			responses_stock(new beta_response[num_requests]);
 
@@ -196,12 +182,30 @@ void riskOpenClTest()
 		std::cout << "Ran CPU " << num_requests << " beta Q's in " << bmCPU.getTotalSeconds() << " seconds" << std::endl;
 	}
 
+	std::cout << "Running AMP" << std::endl;
+	{
+
+		concurrency::array_view<beta_request, 1> avrequest(concurrency::extent<1>(num_requests), requests.get());
+		concurrency::array_view<beta_response, 1> avresponse(concurrency::extent<1>(num_requests), responses_amp.get());
+
+		sys::benchmarker bmAMP;
+
+		bmAMP.start();
+		incBetaQ(avrequest, avresponse);
+		bmAMP.stop();
+
+		std::cout << "Ran AMP " << num_requests << " beta Q's in " << bmAMP.getTotalSeconds() << " seconds" << std::endl;
+	}
+
+
 	int cw = 15;
 	std::cout << "Differences\n";
-	std::cout << std::setw(cw) << "x" << std::setw(cw) << "a" << std::setw(cw) << "b" << std::setw(cw) << "cpu" << std::setw(cw) << "gpu" << std::setw(cw) << "gsl" << std::setw(cw) << "cpu thr" << std::setw(cw) << "gpu thr" << std::endl;
+	std::cout << std::setw(cw) << "x" << std::setw(cw) << "a" << std::setw(cw) << "b" << std::setw(cw) << "cpu" << std::setw(cw) << "gpu" << std::setw(cw) << "amp" << std::setw(cw) << "gsl" << std::setw(cw) << "cpu thr" << std::setw(cw) << "gpu thr" << std::endl;
 	for (int i = 0; i < num_requests; i++)
 	{
-		if (fabs(responses_gpu[i].result - responses_stock[i].result) > 0.000001 || num_requests < 101) {
+		if (fabs(responses_gpu[i].result - responses_stock[i].result) > 0.000001 ||
+			fabs(responses_amp[i].result - responses_stock[i].result) > 0.000001 || 
+			num_requests < 101) {
 			std::cout << std::setw(cw) 
 				<< requests[i].x 
 				<< std::setw(cw)
@@ -212,6 +216,8 @@ void riskOpenClTest()
 				<< responses_cpu[i].result
 				<< std::setw(cw)
 				<< responses_gpu[i].result
+				<< std::setw(cw)
+				<< responses_amp[i].result
 				<< std::setw(cw)
 				<< responses_stock[i].result
 				<< std::setw(cw)
